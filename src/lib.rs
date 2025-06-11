@@ -13,11 +13,12 @@ impl Network {
     }
     
     pub fn random(layers: &[LayerTopology]) -> Self {
-        let layers = layers
+        let layers: Vec<_> = layers
             .windows(2)
             .map(|layers| Layer::random(layers[0].neurons, layers[1].neurons))
             .collect();
             
+        //println!("{:?}", layers);
         Self { layers }
     }
 }
@@ -76,5 +77,23 @@ impl Neuron {
             .collect();
             
         Self { bias, weights }
+    }
+}
+
+pub struct TTTBoard {
+    pub places: Vec<isize>
+}
+
+impl TTTBoard {
+    pub fn new() -> Self {
+        let places = vec![0; 9];
+    
+        Self { places }
+    }
+    
+    pub fn place_sign(&mut self, place_value: isize, position: (usize, usize)) -> Result<(), ()> {
+        if position.0 > 3  || position.1 > 3 { return Err(()) }
+        self.places[position.0 + (3 * position.1)] = place_value;
+        Ok(())
     }
 }
