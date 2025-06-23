@@ -12,7 +12,7 @@ fn main() {
     let brain = Network::random(&layers);
     
     //Future Brain Pool to train from/to
-    let brain_pool: Vec<Network> = (0..100)
+    let mut brain_pool: Vec<Network> = (0..100)
         .into_iter()
         .map(|_| Network::random(&layers))
         .collect();
@@ -25,46 +25,66 @@ fn main() {
         .collect();
     
     //Loop should start here
-    
+    let mut next_brain_pool: Vec<Network> = Vec::with_capacity(50);
     for pair in paired_brains {
-        
+        println!("Starting Check");
+        let mut board = TTTBoard::new();
+        let mut turn: bool = true;
+        let result = loop {
+            if turn {
+                println!("Player 1's turn");
+                if let Ok(_) = pair.0.play_move(&mut board) {}
+                else {
+                    break pair.1;
+                }
+            }
+            else {
+                println!("Player 2's turn");
+                if let Ok(_) = pair.1.play_move(&mut board) {}
+                else {
+                    break pair.0;
+                }
+            }
+            if board.is_done() {
+                println!("Game Won");
+                break match turn {
+                    true => pair.0,
+                    false => pair.1,
+                }
+            }
+            
+            turn = !turn;
+            board.switch_view();
+        };
+        next_brain_pool.push(result.clone());
     }
     
-    //Set up board
-    let mut board = TTTBoard::new();
+    brain_pool = next_brain_pool;
     
-    //Get move from brain
-    let output = brain.propagate(
-        board.places
-        .iter()
-        .map(|value| *value as f32)
-        .collect::<Vec<_>>()
-    );
+    trait TTTPlayer {
+        fn play_move(&self, board: &mut TTTBoard) -> Result<(), ()>;
+    }
     
-    //Format move as usize so the board can read it
-    let output = output
-        .iter()
-        .map(|value| value.round() as usize)
-        .collect::<Vec<_>>();
-    
-    //Check if move is possible
-    //If not, fail brain
-    
-    //Add the symbol to the board
-    board.place_sign(1, (output[0], output[1]))
-        .unwrap_or_else(|_| {
-            //This is occurs when the brain tries to put a 
-            //piece somewhere not on the board
-            //Fail the brain
-        });
-        
-    //Check if brain won game
-    //If so, fail other brain
-    //If not, switch turns
-    
-    //Loop should end here
+    impl TTTPlayer for Network {
+        fn play_move(&self, board: &mut TTTBoard) -> Result<(), ()> {
+            let output = self.propagate(
+                board.places
+                .iter()
+                .map(|value| (*value as f32))
+                .collect::<Vec<_>>()
+            ).iter()
+            .map(|value| value.round() as usize)
+            .collect::<Vec<_>>();
+            
+            if (output[0] + (3 * output[1])) < 9 
+            && board.places[output[0] + (3 * output[1])] != 0 {
+                return Err(())
+            }
+            
+            board.place_sign(1, (output[0], output[1]))
+        }
+    }
 
     //This is my debug area
     //Do not touch! JK
-    println!("{:?} {:?}", output.places);
 }
