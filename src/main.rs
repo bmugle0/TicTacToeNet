@@ -26,6 +26,10 @@ fn main() {
     
     //Loop should start here
     
+    for pair in paired_brains {
+        
+    }
+    
     //Set up board
     let mut board = TTTBoard::new();
     
@@ -34,7 +38,7 @@ fn main() {
         board.places
         .iter()
         .map(|value| *value as f32)
-        .collect()
+        .collect::<Vec<_>>()
     );
     
     //Format move as usize so the board can read it
@@ -45,7 +49,6 @@ fn main() {
     
     //Check if move is possible
     //If not, fail brain
-    todo!();
     
     //Add the symbol to the board
     board.place_sign(1, (output[0], output[1]))
@@ -63,5 +66,5 @@ fn main() {
 
     //This is my debug area
     //Do not touch! JK
-    println!("{:?} {:?}", output, board.places);
+    println!("{:?} {:?}", output.places);
 }

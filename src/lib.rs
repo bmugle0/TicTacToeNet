@@ -96,4 +96,19 @@ impl TTTBoard {
         self.places[position.0 + (3 * position.1)] = place_value;
         Ok(())
     }
+    
+    pub fn switch_view(&self) -> Self {
+        let tmp_places = self.places
+            .iter()
+            .map(|value| {
+                match value {
+                    0 => 0,
+                    1 => 2,
+                    2 => 1,
+                    _ => 0
+                }
+            })
+            .collect();
+        Self { places: tmp_places }
+    }
 }
