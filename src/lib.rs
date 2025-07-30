@@ -30,15 +30,17 @@ impl Network {
         for (layer_a, layer_b) in result.layers.iter_mut().zip(&other.layers) {
             for (neuron_a, neuron_b) in layer_a.neurons.iter_mut().zip(&layer_b.neurons) {
                 //Random Chance that result's neuron's bias will be replaced by other's corresponding bias
-                if rng.r#gen() {
+                if rng.gen_bool(0.1) {
                     neuron_a.bias = neuron_b.bias;
                 }
+                neuron_a.bias += f32::powf(rng.gen_range(-1.0..1.0), 1.5);
                 
                 for (w_a, w_b) in neuron_a.weights.iter_mut().zip(&neuron_b.weights) {
                     //Same thing as above, but instead with each weight
-                    if rng.r#gen() {
+                    if rng.gen_bool(0.1) {
                         *w_a = *w_b;
                     }
+                    *w_a += f32::powf(rng.gen_range(-1.0..1.0), 1.5);
                 }
             }
         }
@@ -203,7 +205,7 @@ impl TTTBoard {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum GameResult {
     Win,
     Error(usize),
