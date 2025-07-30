@@ -22,13 +22,32 @@ impl Network {
         Self { layers }
     }
     
-    pub fn recombine(&self, other: Self) -> Self {
-        //This will take two networks and randomly take parts from each one to make a new one
-        todo!()
+    //This will take two networks and randomly take parts from each one to make a new one
+    pub fn recombine(&self, other: &Self) -> Self {
+        let mut rng = rand::thread_rng();
+        let mut result: Network = self.clone();
+        
+        for (layer_a, layer_b) in result.layers.iter_mut().zip(&other.layers) {
+            for (neuron_a, neuron_b) in layer_a.neurons.iter_mut().zip(&layer_b.neurons) {
+                //Random Chance that result's neuron's bias will be replaced by other's corresponding bias
+                if rng.r#gen() {
+                    neuron_a.bias = neuron_b.bias;
+                }
+                
+                for (w_a, w_b) in neuron_a.weights.iter_mut().zip(&neuron_b.weights) {
+                    //Same thing as above, but instead with each weight
+                    if rng.r#gen() {
+                        *w_a = *w_b;
+                    }
+                }
+            }
+        }
+        
+        result
     }
-    
+
+    //This will take one network and make a single random change somewhere in the network
     pub fn mutate(&self) -> Self {
-        //This will take one network and make a single random change somewhere in the network
         todo!()
     }
 }
@@ -148,5 +167,68 @@ impl TTTBoard {
         );
         
         check.iter().any(|item| *item)
+    }
+    
+    pub fn run_game<'a>(player1: &'a Network, player2: &'a Network) -> (&'a Network, GameResult) {
+        //println!("Starting Check");
+        let mut board = Self::new();
+        let mut turns: usize = 0;
+        let result = loop {
+            if (turns & 1) == 0 {
+                //println!("Player 1's turn");
+                if let Ok(_) = player1.play_move(&mut board) {}
+                else {
+                    break (player2, GameResult::Error(turns));
+                }
+            }
+            else {
+                //println!("Player 2's turn");
+                if let Ok(_) = player2.play_move(&mut board) {}
+                else {
+                    break (player1, GameResult::Error(turns));
+                }
+            }
+            if board.is_done() {
+                //println!("Game Won");
+                break (match (turns & 1) == 0 {
+                    true => player1,
+                    false => player2,
+                }, GameResult::Win )
+            }
+            
+            turns += 1;
+            board.switch_view();
+        };
+        return result
+    }
+}
+
+#[derive(Debug)]
+pub enum GameResult {
+    Win,
+    Error(usize),
+}
+    
+trait TTTPlayer {
+        fn play_move(&self, board: &mut TTTBoard) -> Result<(), ()>;
+}
+    
+impl TTTPlayer for Network {
+    fn play_move(&self, board: &mut TTTBoard) -> Result<(), ()> {
+        let output = self.propagate(
+            board.places
+            .iter()
+            .map(|value| (*value as f32))
+            .collect::<Vec<_>>()
+        ).iter()
+        .map(|value| value.round() as usize)
+        .collect::<Vec<_>>();
+        
+        if (output[0] + (3 * output[1])) < 9 
+        && board.places[output[0] + (3 * output[1])] != 0 {
+            return Err(())
+        }
+        
+        board.place_sign(1, (output[0], output[1]))
     }
 }
